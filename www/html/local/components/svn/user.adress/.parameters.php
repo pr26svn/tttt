@@ -7,7 +7,7 @@ $arComponentParameters = array(
 
     ),
     "PARAMETERS" => array(
-        "ADD_PROPERTIES_TO_BASKET" => array(
+        "GET_ALL" => array(
             "PARENT" => "MAIN",
             "NAME" => GetMessage("svn_parameters_active"),
             "TYPE" => "CHECKBOX",

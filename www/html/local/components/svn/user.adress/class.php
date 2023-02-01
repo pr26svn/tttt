@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorableImplementation;
 use Bitrix\Main\Loader;
@@ -53,16 +54,14 @@ class UserAdress extends \CBitrixComponent implements Controllerable, Errorable
      * @param array $arUserId
      * @return array
      */
-    public function getUserInfo(array $arUserId)
+    public function getUserInfo()
     {
-        $rsUser = \CUser::getList(($by = "personal_country"), ($order = "desc"), ["ID" => $arUserId]);
-        $arResUser = [];
-        while ($arUser = $rsUser->Fetch()) {
-            $name = ($arUser["LOGIN"] != "") ? $arUser["LOGIN"] : "";
-            $lastName = ($arUser["LAST_NAME"] != "") ? $arUser["LAST_NAME"] : "";
-            //собираем инфу о пользователе
-            $arResUser[$arUser["ID"]] = "(" . $arUser["LOGIN"] . ") " . $name . " " . $lastName;
-        }
+
+        $name = (CurrentUser::get()->getFirstName() != "") ? CurrentUser::get()->getFirstName() : "";
+        $lastName = (CurrentUser::get()->getLastName() != "") ? CurrentUser::get()->getLastName() : "";
+        //собираем инфу о пользователе
+        $arResUser = "(" . CurrentUser::get()->getLogin() . ") " . $name . " " . $lastName;
+
 
         return $arResUser;
     }
@@ -73,34 +72,32 @@ class UserAdress extends \CBitrixComponent implements Controllerable, Errorable
      */
     public function getInfoAdressUser($entityDataClass)
     {
+        $idUser = CurrentUser::get()->getId();
+        $arFilter = ["UF_USER_ID" => $idUser];
+        if ($this->arParams["GET_ALL"] != "Y")
+            $arFilter = ["UF_AC" => "1", "UF_USER_ID" => $idUser];
         $rsData = $entityDataClass::getList(array(
             "select" => ["*"],
             "order" => ["ID" => "ASC"],
-            "filter" => ["UF_AC" => "1"],
+            "filter" => $arFilter,
             'cache' => ['ttl' => 360000],
         ));
         $arResData = [];
         $arUser = [];
+        $userInfo = $this->getUserInfo();
+
         while ($arData = $rsData->Fetch()) {
             $arResData[] = [
                 'data' => [ //Данные ячеек
                     "ID" => $arData["ID"],
                     "ADRESS" => $arData["UF_ADRESS"],
-                    "USER" => $arData["UF_USER_ID"]
+                    "USER" => $userInfo
                 ],
                 'actions' => [
                 ]];
             $arUser[] = $arData['UF_USER_ID'];
         }
-        /**
-         * если пустой массив, то и пользователей нет и записей нет
-         */
-        if (!empty($arUser)) {
-            $arUser = $this->getUserInfo($arUser);
-            foreach ($arResData as $key => $arDataItem) {
-                $arResData[$key]["data"]["USER"] = $arUser[$arDataItem["data"]["USER"]];
-            }
-        }
+
         return $arResData;
     }
 
