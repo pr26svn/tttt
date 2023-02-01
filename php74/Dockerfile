@@ -6,6 +6,7 @@ RUN apt-get update \
     php7.4-memcache \
     php7.4-mbstring \
     php7.4-mysql \
+    php7.4-mysqli \
     php7.4-intl \
     php7.4-xdebug \
     php7.4-interbase \
@@ -25,6 +26,6 @@ COPY ./php.ini /etc/php/7.4/cli/conf.d/90-php.ini
 
 RUN usermod -u 1000 www-data
 
-WORKDIR "/var/www/bitrix"
+WORKDIR "/var/www/html"
 
 EXPOSE 9000
